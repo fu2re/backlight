@@ -14,9 +14,9 @@ class Runner():
         a = Astral()
         a.solar_depression = 'civil'
         self.target_ip = target_ip
-        self.city = a[city]
+        self.city = a['Moscow']
         self.bulb = Bulb(bulb)
-        self.__turned_on__ = self.get_state() or False
+        self.__turned_on__ = self.turned_on
 
         self.sunrise = None
         self.sunset = None
@@ -35,43 +35,53 @@ class Runner():
         self.logger.addHandler(ch)
         self.logger.info('START with current state: %s', 'on' if self.__turned_on__ else 'off')
 
-    def get_state(self):
+    def toggle(self, state=None, retry=3):
         try:
-            return self.bulb.get_properties()['power'] == 'on'
+            if state is False:
+                self.bulb.turn_on()
+                self.__turned_on__ = False
+            elif state is True:
+                self.bulb.turn_off()
+                self.__turned_on__ = True
+            else:
+                self.bulb.toggle()
+                self.__turned_on__ = not self.__turned_on__
         except BulbException:
-            return None
+            time.sleep(10)
+            if retry > 0:
+                return self.toggle(state, retry - 1)
 
-    def toggle(self):
+    def get_state(self, retry=3):
         try:
-            self.bulb.toggle()
-            self.__turned_on__ = not self.__turned_on__
+            return self.bulb.get_properties()['power']
         except BulbException:
-            pass
+            time.sleep(10)
+            return self.get_state(retry-1) if retry > 0 else None
 
     @property
     def turned_on(self):
         state = self.get_state()
-        return self.__turned_on__ if state is None else state
+        return self.__turned_on__ if (state is None) else state == 'on'
 
     @property
     def is_up(self):
         ret = subprocess.call(['ping', '-c', '5', '-W', '3', self.target_ip], stdout=open('/dev/null', 'w'),
                               stderr=open('/dev/null', 'w'))
         return ret == 0
-        # return True if os.system("ping -c 1 " + self.target_ip) is 0 else False
 
     def check(self):
         tz = pytz.timezone('Europe/Samara')
-        now = tz.localize(datetime.now())
+        now = tz.localize(datetime.now()).astimezone(pytz.timezone('Europe/Moscow'))
 
         # sun is up - wait until next day
         if not self.sunset < now < self.sunrise:
             # turn off if it still up
             if self.turned_on:
                 self.logger.info('turned OFF: %s', 'sunrise')
-                self.toggle()
+                self.toggle(False)
+            # sleep until next sunset
             self.set_sun()
-            delay = (self.sunrise - now).seconds
+            delay = (self.sunset - now).seconds
             self.logger.info('sleep for : %s', delay)
             time.sleep(delay)
             return self.check()
@@ -81,7 +91,7 @@ class Runner():
         if not self.is_up:
             if self.turned_on:
                 self.logger.info('turned OFF: %s', 'pc is down')
-                self.toggle()
+                self.toggle(False)
             time.sleep(60)
             return self.check()
 
@@ -91,7 +101,7 @@ class Runner():
         # check every minute
         if not self.turned_on:
             self.logger.info('turned ON: %s', 'default state')
-            self.toggle()
+            self.toggle(True)
         time.sleep(60)
         return self.check()
 
@@ -106,7 +116,6 @@ class Runner():
 if __name__ == '__main__':
     r = Runner(
         target_ip='192.168.1.2',
-        bulb="192.168.1.130",
-        city='Moscow'
+        bulb="192.168.1.130"
     )
     r.run()
