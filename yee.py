@@ -10,7 +10,7 @@ from datetime import date, datetime, timedelta
 
 
 class Runner():
-    def __init__(self, city, target_ip, bulb):
+    def __init__(self, target_ip, bulb):
         a = Astral()
         a.solar_depression = 'civil'
         self.target_ip = target_ip
