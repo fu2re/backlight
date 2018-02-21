@@ -51,6 +51,7 @@ class Runner(object):
         self.tz = pytz.timezone(tz)
         self.location = Location((location_name, region_name,
                       lat, long, tz, elevation))
+        self.dusk = None
         self.sunrise = None
         self.sunset = None
         self.set_sun()
