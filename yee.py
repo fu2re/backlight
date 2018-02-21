@@ -28,7 +28,7 @@ class Runner(object):
         self.__turned_on__ = self.turned_on
 
         # sunset offset percentage between dusk and sunset, when bulb is turn on
-        self.delta = 0.07
+        self.delta = delta
 
         # color and brightness gradient for sunrise effect
         self.grad = [(int(c.red * 255), int(c.green * 255), int(c.blue * 255)) for c in list(Color(
@@ -49,8 +49,7 @@ class Runner(object):
 
         # setup current location and timezone
         self.tz = pytz.timezone(tz)
-        self.location = Location((location_name, region_name,
-                      lat, long, tz, elevation))
+        self.location = Location((location_name, region_name, lat, long, tz, elevation))
         self.dusk = None
         self.sunrise = None
         self.sunset = None
@@ -204,7 +203,7 @@ if __name__ == '__main__':
         location_name='Ulyanovsk',
         region_name='Russia',
         elevation=150,
-        delta=0.2,
+        delta=0.07,
         color=((255, 255, 255), (225, 143, 0)),
         brightness=(10, 40)
     )
