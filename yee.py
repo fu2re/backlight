@@ -15,7 +15,7 @@ class Runner():
         a.solar_depression = 'civil'
         self.target_ip = target_ip
         self.city = a['Moscow']
-        self.bulb = Bulb(bulb)
+        self.bulb = bulb
         self.__turned_on__ = self.turned_on
 
         self.sunrise = None
@@ -37,14 +37,15 @@ class Runner():
 
     def toggle(self, state=None, retry=3):
         try:
+            bulb = Bulb(self.bulb)
             if state is False:
-                self.bulb.turn_on()
+                bulb.turn_off()
                 self.__turned_on__ = False
             elif state is True:
-                self.bulb.turn_off()
+                bulb.turn_on()
                 self.__turned_on__ = True
             else:
-                self.bulb.toggle()
+                bulb.toggle()
                 self.__turned_on__ = not self.__turned_on__
         except BulbException:
             time.sleep(10)
@@ -53,7 +54,7 @@ class Runner():
 
     def get_state(self, retry=3):
         try:
-            return self.bulb.get_properties()['power']
+            return Bulb(self.bulb).get_properties()['power']
         except BulbException:
             time.sleep(10)
             return self.get_state(retry-1) if retry > 0 else None
