@@ -99,7 +99,7 @@ class Runner(object):
         :return:
         """
         try:
-            progress = max((self.now - self.sunset).seconds / (self.dusk - self.sunset).seconds, 1)
+            progress = min(max((self.now - self.sunset).seconds, 0) / (self.dusk - self.sunset).seconds, 1)
             bulb = Bulb(self.bulb)
             bulb.set_rgb(*self.grad[min(int(progress * len(self.grad)), len(self.grad) - 1)])
             bulb.set_brightness(self.brightness[min(int(progress * len(self.brightness)), len(self.grad) - 1)])
@@ -187,7 +187,7 @@ class Runner(object):
         now = self.now
         i1, i2 = self.location.sun(now), self.location.sun(now + timedelta(1))
         self.dusk = i1['dusk']
-        self.sunset = i1['sunset'] + timedelta(seconds=int((self.dusk - i1['sunset']).seconds * self.delta))
+        self.sunset = i1['sunset'] - timedelta(seconds=int((self.dusk - i1['sunset']).seconds * self.delta))
         self.sunrise = i2['sunrise']
 
     def run(self):
