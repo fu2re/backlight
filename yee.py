@@ -79,6 +79,7 @@ class Runner(object):
         try:
             bulb = Bulb(self.bulb)
             if state is False:
+                self.upd(0)
                 bulb.turn_off()
                 self.__turned_on__ = False
             elif state is True:
@@ -92,21 +93,22 @@ class Runner(object):
             if retry > 0:
                 return self.toggle(state, retry - 1)
 
-    def upd(self, retry=3):
+    def upd(self, progress=None, retry=3):
         """
         update the current bulb colour and brightness
+        :param progress:
         :param retry:
         :return:
         """
         try:
-            progress = min(max((self.now - self.sunset).seconds, 0) / (self.dusk - self.sunset).seconds, 1)
+            _progress = progress or min(max((self.now - self.sunset).seconds, 0) / (self.dusk - self.sunset).seconds, 1)
             bulb = Bulb(self.bulb)
-            bulb.set_rgb(*self.grad[min(int(progress * len(self.grad)), len(self.grad) - 1)])
-            bulb.set_brightness(self.brightness[min(int(progress * len(self.brightness)), len(self.grad) - 1)])
+            bulb.set_rgb(*self.grad[min(int(_progress * len(self.grad)), len(self.grad) - 1)])
+            bulb.set_brightness(self.brightness[min(int(_progress * len(self.brightness)), len(self.grad) - 1)])
         except BulbException:
             time.sleep(10)
             if retry > 0:
-                return self.upd(retry - 1)
+                return self.upd(progress, retry - 1)
 
     def get_state(self, retry=3):
         """
@@ -164,10 +166,6 @@ class Runner(object):
             time.sleep(60)
             return self.check()
 
-        # try to set colour BEFORE turn the bulb on
-        if self.sunset < now < self.dusk:
-            self.upd()
-
         # sun is down
         # pc is up
         # bulb should turned on
@@ -175,6 +173,10 @@ class Runner(object):
         if not self.turned_on:
             self.logger.info('turned ON: %s', 'default state')
             self.toggle(True)
+
+        # try to set colour AFTER turn the bulb on
+        if self.sunset < now < self.dusk:
+            self.upd()
 
         time.sleep(60)
         return self.check()
