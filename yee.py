@@ -189,7 +189,7 @@ class Runner(object):
         now = self.now
         i1, i2 = self.location.sun(now), self.location.sun(now + timedelta(1))
         self.dusk = i1['dusk']
-        self.sunset = i1['sunset'] - timedelta(seconds=int((self.dusk - i1['sunset']).seconds * self.delta))
+        self.sunset = i1['sunset'] + timedelta(seconds=int((self.dusk - i1['sunset']).seconds * self.delta))
         self.sunrise = i2['sunrise']
 
     def run(self):
@@ -205,7 +205,7 @@ if __name__ == '__main__':
         location_name='Ulyanovsk',
         region_name='Russia',
         elevation=150,
-        delta=0.07,
+        delta=-0.27,
         color=((255, 255, 255), (225, 143, 0)),
         brightness=(10, 40)
     )
